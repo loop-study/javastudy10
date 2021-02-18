@@ -1,6 +1,8 @@
 package example.study;
 
 public class ThreadStudyMain {
+    public static final Object LOCK_1 = new Object();
+    public static final Object LOCK_2 = new Object();
 
     public static void main(String[] args) throws InterruptedException {
         // 쓰레드 구현 방법
@@ -9,7 +11,7 @@ public class ThreadStudyMain {
 //        Thread runnableSample = new Thread(r);
 //
 //        // 2. Thread 클래스 사용
-        TestThread threadSample = new TestThread();
+//        TestThread threadSample = new TestThread();
 //
 //        runnableSample.start();
 //        threadSample.start();
@@ -63,8 +65,58 @@ public class ThreadStudyMain {
         // 메인 쓰레드
 //        System.out.println(Thread.currentThread().getName());
 
-        // 동기화
+        // 동기화, 객체를 공유한다면?
+//        Calc calc = new Calc();
+//
+//        Order1 order1 = new Order1();
+//        order1.setCalc(calc);
+//        order1.start();
+//
+//        Order2 order2 = new Order2();
+//        order2.setCalc(calc);
+//        order2.start();
 
+        // 데드락
+        LockThread1 lockThread1 = new LockThread1();
+        LockThread2 lockThread2 = new LockThread2();
+        lockThread1.start();
+        lockThread2.start();
+
+    }
+
+    static class LockThread1 extends Thread {
+        @Override
+        public void run() {
+            synchronized (LOCK_1) { // 동기화 블록 synchronized(객체) 공유객체는 자기자신을 넣는다
+                System.out.println("lockThread1 : LOCK_1 잡음 ");
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+
+                }
+                System.out.println("lockThread1 : LOCK_2 기다림 ");
+                synchronized (LOCK_2) {
+                    System.out.println("lockThread1 : LOCK_1 & LOCK_2 ");
+                }
+            }
+        }
+    }
+
+    static class LockThread2 extends Thread {
+        @Override
+        public void run() {
+            synchronized (LOCK_2) { // 동기화 블록 synchronized(객체) 공유객체는 자기자신을 넣는다
+                System.out.println("lockThread2 : LOCK_2 잡음 ");
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+                System.out.println("lockThread2 : LOCK_1 기다림 ");
+                synchronized (LOCK_1) {
+                    System.out.println("lockThread2 : LOCK_2 & LOCK_1 ");
+                }
+            }
+        }
     }
 }
 
@@ -113,14 +165,19 @@ class Calc {
         return count;
     }
 
+    // 동기화 메소드 synchronized 를 붙이면 된다
     public void setCount(int count) {
-        this.count = count;
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
+//    public synchronized void setCount(int count) {
 
+        synchronized (this) { // 동기화 블록 synchronized(객체) 공유객체는 자기자신을 넣는다
+            this.count = count;
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+
+            }
+            System.out.println(Thread.currentThread().getName() + " : " + this.count);
         }
-        System.out.println(Thread.currentThread().getName() + " : " + this.count);
     }
 }
 
